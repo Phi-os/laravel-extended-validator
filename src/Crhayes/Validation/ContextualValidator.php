@@ -223,7 +223,7 @@ abstract class ContextualValidator implements MessageProviderInterface
     /**
      * Return any errors.
      *
-     * @return Illuminate\Support\MessageBag
+     * @return \Illuminate\Support\MessageBag
      */
     public function errors()
     {
