@@ -10,297 +10,307 @@ use Validator;
 
 abstract class ContextualValidator implements MessageProviderInterface
 {
-	const DEFAULT_KEY = 'default';
+    const DEFAULT_KEY = 'default';
 
-	/**
-	 * Store the attributes we are validating.
-	 * 
-	 * @var array
-	 */
-	protected $attributes = array();
+    /**
+     * Store the attributes we are validating.
+     *
+     * @var array
+     */
+    protected $attributes = array();
 
-	/**
-	 * Store the validation rules.
-	 * 
-	 * @var array
-	 */
-	protected $rules = array();
+    /**
+     * Store the validation rules.
+     *
+     * @var array
+     */
+    protected $rules = array();
 
-	/**
-	 * Store any custom messages for validation rules.
-	 * 
-	 * @var array
-	 */
-	protected $messages = array();
+    /**
+     * Store any custom messages for validation rules.
+     *
+     * @var array
+     */
+    protected $messages = array();
 
-	/**
-	 * Store any contexts we are validating within.
-	 * 
-	 * @var array
-	 */
-	protected $contexts = array();
+    /**
+     * Store any contexts we are validating within.
+     *
+     * @var array
+     */
+    protected $contexts = array();
 
-	/**
-	 * Store replacement values for any bindings in our rules.
-	 * 
-	 * @var array
-	 */
-	protected $replacements = array();
+    /**
+     * Store replacement values for any bindings in our rules.
+     *
+     * @var array
+     */
+    protected $replacements = array();
 
-	/**
-	 * Store any validation messages generated.
-	 * 
-	 * @var array
-	 */
-	protected $errors = array();
+    /**
+     * Store any validation messages generated.
+     *
+     * @var array
+     */
+    protected $errors = array();
 
-	/**
-	 * Our constructor will store the attributes we are validating, and
-	 * may also take as a second parameter the contexts within which 
-	 * we are validating.
-	 * 
-	 * @param array 	$attributes
-	 * @param mixed 	$context
-	 */
-	public function __construct($attributes = null, $context = null)
-	{
-		$this->attributes = $attributes ?: Input::all();
+    /**
+     * @var bool
+     */
+    protected $validated = false;
 
-		if ($context) $this->addContext($context);
-	}
+    /**
+     * Our constructor will store the attributes we are validating, and
+     * may also take as a second parameter the contexts within which
+     * we are validating.
+     *
+     * @param array 	$attributes
+     * @param mixed 	$context
+     */
+    public function __construct($attributes = null, $context = null)
+    {
+        $this->attributes = $attributes ?: Input::all();
 
-	/**
-	 * Static shorthand for creating a new validator.
-	 * 
-	 * @param  mixed 	$validator
-	 * @return Crhayes\Validation\GroupedValidator
-	 */
-	public static function make($attributes = null, $context = null)
-	{
-		return new static($attributes, $context);
-	}
+        if ($context) $this->addContext($context);
+    }
 
-	/**
-	 * Stub method that can be extended by child classes.
-	 * Passes a validator object and allows for adding complex conditional validations.
-	 * 
-	 * @param \Illuminate\Validation\Validator $validator
-	 */
-	protected function addConditionalRules($validator) {}
+    /**
+     * @param null $attributes
+     * @param null $context
+     *
+     * @return ContextualValidator
+     */
+    public static function make($attributes = null, $context = null)
+    {
+        return new static($attributes, $context);
+    }
 
-	/**
-	 * Set the validation attributes.
-	 *
-	 * @param  array $attributes
-	 * @return Crhayes\Validation\GroupedValidator
-	 */
-	public function setAttributes($attributes = null)
-	{
-		$this->attributes = $attributes ?: Input::all();
+    /**
+     * Stub method that can be extended by child classes.
+     * Passes a validator object and allows for adding complex conditional validations.
+     *
+     * @param \Illuminate\Validation\Validator $validator
+     */
+    protected function addConditionalRules($validator) {}
 
-		return $this;
-	}
+    /**
+     * @param null $attributes
+     *
+     * @return $this
+     */
+    public function setAttributes($attributes = null)
+    {
+        $this->attributes = $attributes ?: Input::all();
 
-	/**
-	 * Retrieve the validation attributes.
-	 *
-	 * @return array
-	 */
-	public function getAttributes()
-	{
-		return $this->attributes;
-	}
+        return $this;
+    }
 
-	/**
-	 * Add a validation context.
-	 * 
-	 * @param array 	$context
-	 */
-	public function addContext($context)
-	{
-		$context = is_array($context) ? $context : array($context);
-		
-		$this->contexts = array_merge($this->contexts, $context);
+    /**
+     * Retrieve the validation attributes.
+     *
+     * @return array
+     */
+    public function getAttributes()
+    {
+        return $this->attributes;
+    }
 
-		return $this;
-	}
+    /**
+     * @param array $context
+     *
+     * @return $this
+     */
+    public function addContext($context)
+    {
+        $context = is_array($context) ? $context : array($context);
 
-	/**
-	 * Set the validation context.
-	 *
-	 * @param  array|string $context
-	 * @return Crhayes\Validation\GroupedValidator
-	 */
-	public function setContext($context)
-	{
-		$this->contexts = is_array($context) ? $context : array($context);
+        $this->contexts = array_merge($this->contexts, $context);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * Retrieve the valiation context.
-	 * 
-	 * @return array
-	 */
-	public function getContexts()
-	{
-		return $this->contexts;
-	}
+    /**
+     * Set the validation context.
+     *
+     * @param $context
+     *
+     * @return $this
+     */
+    public function setContext($context)
+    {
+        $this->contexts = is_array($context) ? $context : array($context);
 
-	/**
-	 * Bind a replacement value to a placeholder in a rule.
-	 * 
-	 * @param  string 	$field
-	 * @param  array 	$replacement
-	 * @return Crhayes\Validation\ContextualValidator
-	 */
-	public function bindReplacement($field, array $replacement)
-	{
-		$this->replacements[$field] = $replacement;
+        return $this;
+    }
 
-		return $this;
-	}
+    /**
+     * Retrieve the valiation context.
+     *
+     * @return array
+     */
+    public function getContexts()
+    {
+        return $this->contexts;
+    }
 
-	/**
-	 * Get a bound replacement by key.
-	 * 
-	 * @param  string $key
-	 * @return array
-	 */
-	public function getReplacement($key)
-	{
-		return array_get($this->replacements, $key, array());
-	}
+    /**
+     * Bind a replacement value to a placeholder in a rule.
+     *
+     * @param  string 	$field
+     * @param  array 	$replacement
+     * @return $this
+     */
+    public function bindReplacement($field, array $replacement)
+    {
+        $this->replacements[$field] = $replacement;
 
-	/**
-	 * Perform a validation check against our attributes.
-	 * 
-	 * @return boolean
-	 */
-	public function passes()
-	{
-		$rules = $this->bindReplacements($this->getRulesInContext());
+        return $this;
+    }
 
-		$validator = Validator::make($this->attributes, $rules, $this->messages);
+    /**
+     * Get a bound replacement by key.
+     *
+     * @param  string $key
+     * @return array
+     */
+    public function getReplacement($key)
+    {
+        return array_get($this->replacements, $key, array());
+    }
 
-		$this->addConditionalRules($validator);
+    /**
+     * Perform a validation check against our attributes.
+     *
+     * @return boolean
+     */
+    public function passes()
+    {
+        $this->validated = true;
 
-		if ($validator->passes()) return true;
+        $rules = $this->bindReplacements($this->getRulesInContext());
 
-		$this->errors = $validator->messages();
+        $validator = Validator::make($this->attributes, $rules, $this->messages);
 
-		return false;
-	}
+        $this->addConditionalRules($validator);
 
-	/**
-	 * Determine if the data fails the validation rules.
-	 *
-	 * @return bool
-	 */
-	public function fails()
-	{
-		return ! $this->passes();
-	}
+        if ($validator->passes()) return true;
 
-	/**
-	 * Get the messages for the instance.
-	 *
-	 * @return \Illuminate\Support\MessageBag
-	 */
-	public function getMessageBag()
-	{
-		return $this->errors();
-	}
+        $this->errors = $validator->messages();
 
-	/**
-	 * Return any errors.
-	 * 
-	 * @return Illuminate\Support\MessageBag
-	 */
-	public function errors()
-	{
-		if ( ! $this->errors) $this->passes();
+        return false;
+    }
 
-		return $this->errors;
-	}
+    /**
+     * Determine if the data fails the validation rules.
+     *
+     * @return bool
+     */
+    public function fails()
+    {
+        return ! $this->passes();
+    }
 
-	/**
-	 * Get the validaton rules within the context of the current validation.
-	 * 
-	 * @return array
-	 */
-	protected function getRulesInContext()
-	{
-		if ( ! $this->hasContext())	return $this->rules;
+    /**
+     * Get the messages for the instance.
+     *
+     * @return \Illuminate\Support\MessageBag
+     */
+    public function getMessageBag()
+    {
+        return $this->errors();
+    }
 
-		$rulesInContext = array_get($this->rules, self::DEFAULT_KEY, array());
+    /**
+     * Return any errors.
+     *
+     * @return Illuminate\Support\MessageBag
+     */
+    public function errors()
+    {
+        if ( ! $this->validated) $this->passes();
 
-		foreach ($this->contexts as $context)
-		{
-			if ( ! array_get($this->rules, $context))
-			{
-				throw new ValidatorContextException(
-					sprintf(
-						"'%s' does not contain the validation context '%s'", 
-						get_called_class(), 
-						$context
-					)
-				);
-			}
+        return $this->errors;
+    }
 
-			$rulesInContext = array_merge($rulesInContext, $this->rules[$context]);
-		}
+    /**
+     * Get the validaton rules within the context of the current validation.
+     *
+     * @return array|mixed
+     * @throws ValidatorContextException
+     */
+    protected function getRulesInContext()
+    {
+        if ( ! $this->hasContext())	return $this->rules;
 
-		return $rulesInContext;
-	}
+        $rulesInContext = array_get($this->rules, self::DEFAULT_KEY, array());
 
-	/**
-	 * Spin through our contextual rules array and bind any replacement
-	 * values to placeholders within the rules.
-	 * 
-	 * @param  array 	$rules
-	 * @return array
-	 */
-	protected function bindReplacements($rules)
-	{
-		foreach ($rules as $field => &$rule)
-		{
-			$replacements = $this->getReplacement($field);
+        foreach ($this->contexts as $context)
+        {
+            if ( ! array_get($this->rules, $context))
+            {
+                throw new ValidatorContextException(
+                    sprintf(
+                        "'%s' does not contain the validation context '%s'",
+                        get_called_class(),
+                        $context
+                    )
+                );
+            }
 
-			try
-			{
-				$rule = preg_replace_callback('/@(\w+)/', function($matches) use($replacements)
-				{
-					return $replacements[$matches[1]];
-				}, $rule);
-			}
-			catch (\ErrorException $e)
-			{
-				$replacementCount = substr_count($rule, '@');
+            $rulesInContext = array_merge($rulesInContext, $this->rules[$context]);
+        }
 
-				throw new ReplacementBindingException(
-					sprintf(
-						"Invalid replacement count in rule '%s' for field '%s'; Expecting '%d' bound %s",
-						$rule,
-						$field,
-						$replacementCount,
-						str_plural('replacement', $replacementCount)
-					)
-				);
-			}
-		}
+        return $rulesInContext;
+    }
 
-		return $rules;
-	}
+    /**
+     * Spin through our contextual rules array and bind any replacement
+     * values to placeholders within the rules.
+     *
+     * @param $rules
+     *
+     * @return mixed
+     * @throws ReplacementBindingException
+     */
+    protected function bindReplacements($rules)
+    {
+        foreach ($rules as $field => &$rule)
+        {
+            $replacements = $this->getReplacement($field);
 
-	/**
-	 * Check if the current validation has a context.
-	 * 
-	 * @return boolean
-	 */
-	protected function hasContext()
-	{
-		return (count($this->contexts) OR array_get($this->rules, self::DEFAULT_KEY));
-	}
+            try
+            {
+                $rule = preg_replace_callback('/@(\w+)/', function($matches) use($replacements)
+                    {
+                        return $replacements[$matches[1]];
+                    }, $rule);
+            }
+            catch (\ErrorException $e)
+            {
+                $replacementCount = substr_count($rule, '@');
+
+                throw new ReplacementBindingException(
+                    sprintf(
+                        "Invalid replacement count in rule '%s' for field '%s'; Expecting '%d' bound %s",
+                        $rule,
+                        $field,
+                        $replacementCount,
+                        str_plural('replacement', $replacementCount)
+                    )
+                );
+            }
+        }
+
+        return $rules;
+    }
+
+    /**
+     * Check if the current validation has a context.
+     *
+     * @return boolean
+     */
+    protected function hasContext()
+    {
+        return (count($this->contexts) OR array_get($this->rules, self::DEFAULT_KEY));
+    }
 }

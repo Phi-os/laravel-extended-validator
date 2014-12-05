@@ -4,6 +4,7 @@ namespace Crhayes\Validation;
 
 use Crhayes\Validation\Exceptions\MissingValidatorException;
 use Illuminate\Support\Contracts\MessageProviderInterface;
+use Illuminate\Support\MessageBag;
 
 class GroupedValidator
 {
@@ -33,23 +34,24 @@ class GroupedValidator
 		if ($validator) $this->addValidator($validator);
 	}
 
-	/**
-	 * Static shorthand for creating a new grouped validator.
-	 * 
-	 * @param  mixed 	$validator
-	 * @return Crhayes\Validation\GroupedValidator
-	 */
+    /**
+     * @param array $validator
+     *
+     * @return Crhayes\Validation\GroupedValidator
+     */
 	public static function make($validator = array())
 	{
 		return new static($validator);
 	}
 
-	/**
-	 * Add a validator to spin through. Accepts either a single
-	 * Validator object or an array of validators.
-	 * 
-	 * @param mixed 	$validator
-	 */
+    /**
+     * Add a validator to spin through. Accepts either a single
+     * Validator object or an array of validators.
+     *
+     * @param MessageProviderInterface $validator
+     *
+     * @return $this
+     */
 	public function addValidator(MessageProviderInterface $validator)
 	{
 		$validator = is_array($validator) ? $validator : array($validator);
@@ -59,11 +61,12 @@ class GroupedValidator
 		return $this;
 	}
 
-	/**
-	 * Perform a check to see if all of the validators have passed.
-	 * 
-	 * @return boolean
-	 */
+    /**
+     * Perform a check to see if all of the validators have passed.
+     *
+     * @return bool
+     * @throws MissingValidatorException
+     */
 	public function passes()
 	{
 		if ( ! count($this->validators)) throw new MissingValidatorException('No validators provided: You must provide at least one validator');
@@ -96,6 +99,6 @@ class GroupedValidator
 	 */
 	public function errors()
 	{
-		return new \Illuminate\Support\MessageBag($this->errors);
+		return new MessageBag($this->errors);
 	}
 }
