@@ -238,7 +238,7 @@ abstract class ContextualValidator implements MessageProviderInterface
      * @return array|mixed
      * @throws ValidatorContextException
      */
-    protected function getRulesInContext()
+    public function getRulesInContext()
     {
         if ( ! $this->hasContext())	return $this->rules;
 
