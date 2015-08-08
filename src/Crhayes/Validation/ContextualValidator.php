@@ -4,11 +4,10 @@ namespace Crhayes\Validation;
 
 use Crhayes\Validation\Exceptions\ReplacementBindingException;
 use Crhayes\Validation\Exceptions\ValidatorContextException;
-use Illuminate\Support\Contracts\MessageProviderInterface;
-use Input;
+use Illuminate\Contracts\Support\MessageProvider;
 use Validator;
 
-abstract class ContextualValidator implements MessageProviderInterface
+abstract class ContextualValidator implements MessageProvider
 {
     const DEFAULT_KEY = 'default';
 
@@ -69,7 +68,7 @@ abstract class ContextualValidator implements MessageProviderInterface
      */
     public function __construct($attributes = null, $context = null)
     {
-        $this->attributes = $attributes ?: Input::all();
+        $this->attributes = $attributes ?: request()->all();
 
         if ($context) $this->addContext($context);
     }
@@ -100,7 +99,7 @@ abstract class ContextualValidator implements MessageProviderInterface
      */
     public function setAttributes($attributes = null)
     {
-        $this->attributes = $attributes ?: Input::all();
+        $this->attributes = $attributes ?: request()->all();
 
         return $this;
     }
@@ -281,9 +280,9 @@ abstract class ContextualValidator implements MessageProviderInterface
             try
             {
                 $rule = preg_replace_callback('/@(\w+)/', function($matches) use($replacements)
-                    {
-                        return $replacements[$matches[1]];
-                    }, $rule);
+                {
+                    return $replacements[$matches[1]];
+                }, $rule);
             }
             catch (\ErrorException $e)
             {
