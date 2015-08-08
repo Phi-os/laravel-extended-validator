@@ -6,6 +6,7 @@ use Crhayes\Validation\Exceptions\ReplacementBindingException;
 use Crhayes\Validation\Exceptions\ValidatorContextException;
 use Illuminate\Contracts\Support\MessageProvider;
 use Validator;
+use Input;
 
 abstract class ContextualValidator implements MessageProvider
 {
@@ -68,7 +69,7 @@ abstract class ContextualValidator implements MessageProvider
      */
     public function __construct($attributes = null, $context = null)
     {
-        $this->attributes = $attributes ?: request()->all();
+        $this->attributes = $attributes ?: Input::all();
 
         if ($context) $this->addContext($context);
     }
@@ -99,7 +100,7 @@ abstract class ContextualValidator implements MessageProvider
      */
     public function setAttributes($attributes = null)
     {
-        $this->attributes = $attributes ?: request()->all();
+        $this->attributes = $attributes ?: Input::all();
 
         return $this;
     }
